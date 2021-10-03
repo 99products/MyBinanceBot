@@ -1,5 +1,5 @@
 import json
-import binance
+import mybinance
 
 import telegram
 from deta import App
@@ -8,11 +8,11 @@ from queue import Queue
 from fastapi import Request, FastAPI
 import db
 
-HELP_TEXT = 'Its my personal binance alert bot, checkout my source to setup your own'
+HELP_TEXT = 'Its my personal binance alert bot, checkout my source at https://github.com/99products/MyBinanceBot to setup your own'
 CHANGE_PERCENT = 20
 THRESHOLD_TO_NOTIFY = 5
 app = App(FastAPI())
-config=json.load(open('config.json', 'r'))
+config = json.load(open('config.json', 'r'))
 TELEGRAM_TOKEN = config['telegram_token']
 TELEGRAM_CHAT_ID = config['my_telegram_id']
 
@@ -38,7 +38,7 @@ async def process(request: Request):
             elif 'positions' in text:
                 showpositions(update)
             else:
-                start(update)
+                ticker(update)
         else:
             notsupported(update)
     return 'ok'
@@ -51,13 +51,20 @@ def schedule_balance(event):
         volumetracker()
     return 'ok'
 
+
 def volumetracker():
-    volume,open,close=binance.volumetracker()
-    if volume>0:
-        bot.sendMessage(chat_id=TELEGRAM_CHAT_ID,text='BTC Volume change: #'+volume+' '+'Open: '+open+' Close: '+close)
+    volume, open, close = mybinance.volumetracker()
+    upordown = '🔼'
+    if (float(close) < float(open)):
+        upordown = '🔽'
+    if volume > 0:
+        bot.sendMessage(chat_id=TELEGRAM_CHAT_ID,
+                        text=upordown + ' ' + str(volume) + ' ' + str(open) + ' to ' + str(close))
+
 
 def notsupported(update):
     bot.sendMessage(chat_id=update.message.chat.id, text="The bot is reserved only for ThiyagaB. Contact @digi_nomad")
+
 
 def showpnl(update):
     value = pnltracker()
@@ -65,18 +72,18 @@ def showpnl(update):
 
 
 def showpositions(update):
-    positions = binance.fetchpositions()
+    positions = mybinance.fetchpositions()
     displaytext = "```\n"
-    totalprofit=0
+    totalprofit = 0
     for position in positions:
         displaytext = displaytext + fillspace(position['symbol'] + '@' + roundoff(position['markPrice'], 3),
                                               20) + fillspace(position['positionAmt'], 7) + roundoff(
             position['unRealizedProfit'], 2)
         displaytext = displaytext + '\n'
-        totalprofit=totalprofit+float(position['unRealizedProfit'])
-    displaytext=displaytext+"\nTotal Profit: "+roundoff(str(totalprofit),2)+"```"
-
-    bot.sendMessage(chat_id=update.message.chat.id, text=displaytext,parse_mode="Markdown")
+        totalprofit = totalprofit + float(position['unRealizedProfit'])
+    displaytext = displaytext + "\nTotal Profit: " + roundoff(str(totalprofit), 2) + "```"
+    # displaytext = displaytext+'\n'+'🔼'
+    bot.sendMessage(chat_id=update.message.chat.id, text=displaytext, parse_mode="Markdown")
 
 
 def fillspace(text: str, maxlen: int):
@@ -87,24 +94,37 @@ def fillspace(text: str, maxlen: int):
     return text
 
 
+def ticker(update):
+    print(update.message.chat.id)
+    symbol = update.message.text
+    if symbol:
+        if (len(symbol) < 6): symbol = symbol + 'usdt'
+        value = mybinance.ticker(symbol)
+        tickertext = ''
+        if 'symbol' in value:
+            tickertext = value['symbol'] + '@' + value['price']
+            bot.sendMessage(chat_id=update.message.chat.id, text=tickertext)
+
+
 def start(update):
     print(update.message.chat.id)
     bot.sendMessage(chat_id=update.message.chat.id, text=HELP_TEXT)
 
 
 def pnltracker():
-    pnl = binance.fetchpnl()
-    data = db.get(binance.api_key)
+    pnl = mybinance.fetchpnl()
+    data = db.get(mybinance.api_key)
     print(data)
     if data and len(data) > 0:
         oldpnl = data['pnl']
     else:
-        db.insert({'pnl': pnl, 'key': binance.api_key})
+        db.insert({'pnl': pnl, 'key': mybinance.api_key})
     if checkrule(oldpnl, pnl, data):
-        db.insert({'pnl': pnl, 'key': binance.api_key})
-        print('changed: ' + str(oldpnl - pnl))
-        text = 'Overall pnl ' + ('increased' if pnl > oldpnl else 'decreased') + ' by more than ' + str(
-            CHANGE_PERCENT) + '% from ' + roundoff(str(
+        db.insert({'pnl': pnl, 'key': mybinance.api_key})
+        upordown = '🔼'
+        if (pnl < oldpnl):
+            upordown = '🔽'
+        text = upordown + ' ' + roundoff(str(
             oldpnl), 2) + ' to ' + roundoff(str(pnl), 2)
         bot.sendMessage(chat_id=TELEGRAM_CHAT_ID, text=text)
     else:
@@ -122,5 +142,3 @@ def checkrule(oldpnl, pnl, data):
 # lazy to find the standard method
 def roundoff(number: str, precision: int):
     return number[:number.index('.') + precision + 1]
-
-
