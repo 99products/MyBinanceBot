@@ -11,8 +11,9 @@ secret_key = config['binance_secret_key']
 
 BALANCE_URL = 'https://fapi.binance.com/fapi/v2/balance?{}&signature={}'
 POSITIONS_URL = 'https://fapi.binance.com//fapi/v2/positionRisk?{}&signature={}'
-KLINES_URL= 'https://fapi.binance.com/fapi/v1/continuousKlines?limit=2&pair=BTCUSDT&contractType=PERPETUAL&interval=1m'
+KLINES_URL= 'https://fapi.binance.com/fapi/v1/continuousKlines?limit=5&pair=BTCUSDT&contractType=PERPETUAL&interval=1m'
 FUNDING_URL='https://fapi.binance.com//fapi/v1/income?{}&signature={}'
+TICKER_URL='https://api.binance.com/api/v3/ticker/price?symbol='
 
 
 def binancerequest(url):
@@ -62,11 +63,7 @@ def fundingfee():
             print(entry['time'])
             # print(dt.datetime.fromtimestamp(int(entry['time'])).strftime('%Y-%m-%d %H:%M:%S'))
 
-
-
-
     print(totalfundfee)
-    # print(list(filter(lambda entry: entry['incomeType'] =='FUNDING_FEE', response.json())))
 
 def fillspace(text:str,maxlen:int):
     spacestofill=maxlen-len(text)
@@ -78,30 +75,39 @@ def fillspace(text:str,maxlen:int):
 
 def volumetracker():
     data=binancerequest(KLINES_URL).json()
-    print(data)
-    currentvolume=float(data[1][5])
-    aminbefore=float(data[0][5])
+    print (data)
+    totallength=len(data)
+    sumofvolumes=0
 
+    for entry in data[:-1]:
+        sumofvolumes=sumofvolumes+float(entry[5])
+    average = sumofvolumes/(totallength-1)
+
+
+    currentvolume=float(data[totallength-1][5])
     lastprice=0
     open=0
     volume=0
-    if currentvolume >500:
-        open=float(data[1][1])
-        lastprice=float(data[1][4])
+    print( str(currentvolume)+' '+str(average))
+
+    if currentvolume>500 and currentvolume >2*average:
+        open=float(data[totallength-1][1])
+        lastprice=float(data[totallength-1][4])
         volume=currentvolume
-        print('iyo amma')
-    elif aminbefore >500:
-        open=float(data[0][1])
-        lastprice = float(data[0][4])
-        volume=aminbefore
-        print('iyayo amma')
+
 
     return volume,open,lastprice
 
-
+def ticker(symbol:str):
+    response=binancerequest(TICKER_URL+symbol.upper())
+    # print(response.status_code)
+    return response.json()
 
 def roundoff(number: str, precision: int):
     return number[:number.index('.') + precision + 1]
 
 
-fundingfee()
+
+# fundingfee()
+print(volumetracker())
+
