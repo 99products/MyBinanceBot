@@ -34,6 +34,6 @@ jobs:
         uses: BogDAAAMN/deta-deploy-action@v1.0.1
         with:
           # Deta access token
-          deta-access-token: '3434'
+          deta-access-token: ${{ secrets.DETA_KEY }}
           # Deta micro name
-          deta-name: '353252'
+          deta-name: binancealertsbot
