@@ -3,4 +3,4 @@ My own personal bot integrated with my binance account for quick alerts and chec
 1. Alerts on sudden btc volume change
 2. Alerts on profit changes 
 3. Check positions
-4. Check an asset price
+4. Check an asset price (e.g. just type 'BTC', it shows value of 'BTCUSDT')
