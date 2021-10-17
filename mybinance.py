@@ -48,7 +48,7 @@ def showpositions():
 
 def fetchpnl():
     response = binancerequest(BALANCE_URL)
-    pnl = float(response.json()[1]['crossUnPnl'])
+    pnl=float(list(filter(lambda account: account['asset']=='USDT',response.json()))[0]['crossUnPnl'])
     return pnl
 
 def fundingfee():
@@ -109,5 +109,5 @@ def roundoff(number: str, precision: int):
 
 
 # fundingfee()
-print(volumetracker())
-
+# print(volumetracker())
+print(fetchpnl())
