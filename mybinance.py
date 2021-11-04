@@ -55,15 +55,18 @@ def fundingfee():
     response = binancerequest(FUNDING_URL).json()
     totalfundfee=0
     count=0
+    print(len(response))
+    firsttimestamp = ''
     for entry in response:
         if entry['incomeType'] =='FUNDING_FEE':
             totalfundfee=totalfundfee+float(entry['income'])
         count=count+1
         if count == 1:
             print(entry['time'])
-            # print(dt.datetime.fromtimestamp(int(entry['time'])).strftime('%Y-%m-%d %H:%M:%S'))
+            firsttimestamp=dt.datetime.fromtimestamp(int(entry['time'])/1000).strftime('%Y-%m-%d %H:%M:%S')
 
     print(totalfundfee)
+    return totalfundfee,firsttimestamp
 
 def fillspace(text:str,maxlen:int):
     spacestofill=maxlen-len(text)
@@ -90,7 +93,7 @@ def volumetracker():
     volume=0
     print( str(currentvolume)+' '+str(average))
 
-    if currentvolume>500 and currentvolume >2*average:
+    if currentvolume>1000 and currentvolume >2*average:
         open=float(data[totallength-1][1])
         lastprice=float(data[totallength-1][4])
         volume=currentvolume
@@ -108,6 +111,6 @@ def roundoff(number: str, precision: int):
 
 
 
-# fundingfee()
+fundingfee()
 # print(volumetracker())
-print(fetchpnl())
+# print(fetchpnl())

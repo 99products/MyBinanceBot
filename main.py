@@ -37,6 +37,8 @@ async def process(request: Request):
                 showpnl(update)
             elif 'positions' in text:
                 showpositions(update)
+            elif 'fee' in text:
+                fundingfee(update)
             else:
                 ticker(update)
         else:
@@ -70,8 +72,15 @@ def showpnl(update):
     value = pnltracker()
     bot.sendMessage(chat_id=update.message.chat.id, text=roundoff(str(value), 2))
 
+def fundingfee(update):
+    value = mybinance.fundingfee()
+    text = str(value[0])+' from '+ value[1]
+    bot.sendMessage(chat_id=update.message.chat.id, text=text)
 
 def showpositions(update):
+    bot.sendMessage(chat_id=update.message.chat.id, text=construct_positions_text(), parse_mode="Markdown")
+
+def construct_positions_text():
     positions = mybinance.fetchpositions()
     displaytext = "```\n"
     totalprofit = 0
@@ -81,10 +90,8 @@ def showpositions(update):
             position['unRealizedProfit'], 2)
         displaytext = displaytext + '\n'
         totalprofit = totalprofit + float(position['unRealizedProfit'])
-    displaytext = displaytext + "\nTotal Profit: " + roundoff(str(totalprofit), 2) + "```"
-    # displaytext = displaytext+'\n'+'🔼'
-    bot.sendMessage(chat_id=update.message.chat.id, text=displaytext, parse_mode="Markdown")
-
+    displaytext = "Total Profit: " + roundoff(str(totalprofit), 2) +"\n\n"+ displaytext + "```"
+    return displaytext
 
 def fillspace(text: str, maxlen: int):
     spacestofill = maxlen - len(text)
@@ -97,12 +104,13 @@ def fillspace(text: str, maxlen: int):
 def ticker(update):
     print(update.message.chat.id)
     symbol = update.message.text
+    if symbol.startswith('/'):
+        symbol = symbol[1:]
     if symbol:
-        if (len(symbol) < 6): symbol = symbol + 'usdt'
+        if len(symbol) < 6: symbol = symbol + 'usdt'
         value = mybinance.ticker(symbol)
-        tickertext = ''
         if 'symbol' in value:
-            tickertext = value['symbol'] + '@' + value['price']
+            tickertext = '/'+value['symbol'] + ' @ ' + value['price']
             bot.sendMessage(chat_id=update.message.chat.id, text=tickertext)
 
 
@@ -121,12 +129,13 @@ def pnltracker():
         db.insert({'pnl': pnl, 'key': mybinance.api_key})
     if checkrule(oldpnl, pnl, data):
         db.insert({'pnl': pnl, 'key': mybinance.api_key})
-        upordown = '🔼'
-        if (pnl < oldpnl):
-            upordown = '🔽'
-        text = upordown + ' ' + roundoff(str(
-            oldpnl), 2) + ' to ' + roundoff(str(pnl), 2)
-        bot.sendMessage(chat_id=TELEGRAM_CHAT_ID, text=text)
+        # upordown = '🔼'
+        # if (pnl < oldpnl):
+        #     upordown = '🔽'
+        #
+        # text = upordown + ' ' + roundoff(str(
+        #     oldpnl), 2) + ' to ' + roundoff(str(pnl), 2)
+        bot.sendMessage(chat_id=TELEGRAM_CHAT_ID, text=construct_positions_text(),parse_mode="Markdown")
     else:
         print(pnl)
     return pnl
@@ -142,3 +151,5 @@ def checkrule(oldpnl, pnl, data):
 # lazy to find the standard method
 def roundoff(number: str, precision: int):
     return number[:number.index('.') + precision + 1]
+
+
