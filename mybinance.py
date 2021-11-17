@@ -4,6 +4,8 @@ import requests
 import hashlib
 import hmac
 import datetime as dt
+import db
+import mybinance
 
 config = json.load(open('config.json', 'r'))
 api_key = config['binance_api_key']
@@ -44,7 +46,7 @@ def showpositions():
     for position in positions:
         displaytext= displaytext+fillspace(position['symbol']+'@'+roundoff(position['markPrice'],3),32)+fillspace(position['positionAmt'],10)+roundoff(position['unRealizedProfit'],2)
         displaytext=displaytext+'\n'
-    print(displaytext)
+    # print(displaytext)
 
 def fetchpnl():
     response = binancerequest(BALANCE_URL)
@@ -55,17 +57,15 @@ def fundingfee():
     response = binancerequest(FUNDING_URL).json()
     totalfundfee=0
     count=0
-    print(len(response))
+    # print(len(response))
     firsttimestamp = ''
     for entry in response:
         if entry['incomeType'] =='FUNDING_FEE':
             totalfundfee=totalfundfee+float(entry['income'])
         count=count+1
         if count == 1:
-            print(entry['time'])
             firsttimestamp=dt.datetime.fromtimestamp(int(entry['time'])/1000).strftime('%Y-%m-%d %H:%M:%S')
 
-    print(totalfundfee)
     return totalfundfee,firsttimestamp
 
 def fillspace(text:str,maxlen:int):
@@ -78,7 +78,6 @@ def fillspace(text:str,maxlen:int):
 
 def volumetracker():
     data=binancerequest(KLINES_URL).json()
-    print (data)
     totallength=len(data)
     sumofvolumes=0
 
@@ -91,8 +90,6 @@ def volumetracker():
     lastprice=0
     open=0
     volume=0
-    print( str(currentvolume)+' '+str(average))
-
     if currentvolume>1000 and currentvolume >2*average:
         open=float(data[totallength-1][1])
         lastprice=float(data[totallength-1][4])
@@ -111,6 +108,11 @@ def roundoff(number: str, precision: int):
 
 
 
-fundingfee()
+
+# fundingfee()
+positions=fetchpositions()
+db.get(mybinance.api_key)
+for position in positions:
+    print(position['symbol']+' '+position['positionAmt'])
 # print(volumetracker())
 # print(fetchpnl())
