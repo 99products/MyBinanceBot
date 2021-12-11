@@ -13,9 +13,9 @@ secret_key = config['binance_secret_key']
 
 BALANCE_URL = 'https://fapi.binance.com/fapi/v2/balance?{}&signature={}'
 POSITIONS_URL = 'https://fapi.binance.com//fapi/v2/positionRisk?{}&signature={}'
-KLINES_URL= 'https://fapi.binance.com/fapi/v1/continuousKlines?limit=5&pair=BTCUSDT&contractType=PERPETUAL&interval=1m'
-FUNDING_URL='https://fapi.binance.com//fapi/v1/income?{}&signature={}'
-TICKER_URL='https://api.binance.com/api/v3/ticker/price?symbol='
+KLINES_URL = 'https://fapi.binance.com/fapi/v1/continuousKlines?limit=5&pair=BTCUSDT&contractType=PERPETUAL&interval=1m'
+FUNDING_URL = 'https://fapi.binance.com//fapi/v1/income?{}&signature={}'
+TICKER_URL = 'https://api.binance.com/api/v3/ticker/price?symbol='
 
 
 def binancerequest(url):
@@ -35,84 +35,88 @@ def binancerequest(url):
 
 def fetchpositions():
     response = binancerequest(POSITIONS_URL)
-    result: list =response.json()
-    result=list(filter(lambda position:float(position['positionAmt'])!=0,result))
+    result: list = response.json()
+    result = list(filter(lambda position: float(position['positionAmt']) != 0, result))
     result.sort(key=lambda position: float(position['unRealizedProfit']))
     return result
 
+
 def showpositions():
-    positions =fetchpositions()
-    displaytext =''
+    positions = fetchpositions()
+    displaytext = ''
     for position in positions:
-        displaytext= displaytext+fillspace(position['symbol']+'@'+roundoff(position['markPrice'],3),32)+fillspace(position['positionAmt'],10)+roundoff(position['unRealizedProfit'],2)
-        displaytext=displaytext+'\n'
+        displaytext = displaytext + fillspace(position['symbol'] + '@' + roundoff(position['markPrice'], 3),
+                                              32) + fillspace(position['positionAmt'], 10) + roundoff(
+            position['unRealizedProfit'], 2)
+        displaytext = displaytext + '\n'
     # print(displaytext)
+
 
 def fetchpnl():
     response = binancerequest(BALANCE_URL)
-    pnl=float(list(filter(lambda account: account['asset']=='USDT',response.json()))[0]['crossUnPnl'])
+    pnl = float(list(filter(lambda account: account['asset'] == 'USDT', response.json()))[0]['crossUnPnl'])
     return pnl
+
 
 def fundingfee():
     response = binancerequest(FUNDING_URL).json()
-    totalfundfee=0
-    count=0
+    totalfundfee = 0
+    count = 0
     # print(len(response))
     firsttimestamp = ''
     for entry in response:
-        if entry['incomeType'] =='FUNDING_FEE':
-            totalfundfee=totalfundfee+float(entry['income'])
-        count=count+1
+        if entry['incomeType'] == 'FUNDING_FEE':
+            totalfundfee = totalfundfee + float(entry['income'])
+        count = count + 1
         if count == 1:
-            firsttimestamp=dt.datetime.fromtimestamp(int(entry['time'])/1000).strftime('%Y-%m-%d %H:%M:%S')
+            firsttimestamp = dt.datetime.fromtimestamp(int(entry['time']) / 1000).strftime('%Y-%m-%d %H:%M:%S')
 
-    return totalfundfee,firsttimestamp
+    return totalfundfee, firsttimestamp
 
-def fillspace(text:str,maxlen:int):
-    spacestofill=maxlen-len(text)
-    while(spacestofill>0):
-        text=text+' '
-        spacestofill=spacestofill-1
+
+def fillspace(text: str, maxlen: int):
+    spacestofill = maxlen - len(text)
+    while (spacestofill > 0):
+        text = text + ' '
+        spacestofill = spacestofill - 1
     return text
 
 
 def volumetracker():
-    data=binancerequest(KLINES_URL).json()
-    totallength=len(data)
-    sumofvolumes=0
+    data = binancerequest(KLINES_URL).json()
+    totallength = len(data)
+    sumofvolumes = 0
 
     for entry in data[:-1]:
-        sumofvolumes=sumofvolumes+float(entry[5])
-    average = sumofvolumes/(totallength-1)
+        sumofvolumes = sumofvolumes + float(entry[5])
+    average = sumofvolumes / (totallength - 1)
+
+    currentvolume = float(data[totallength - 1][5])
+    lastprice = 0
+    open = 0
+    volume = 0
+    if currentvolume > 1000:  # and currentvolume >2*average:
+        open = float(data[totallength - 1][1])
+        lastprice = float(data[totallength - 1][4])
+        volume = currentvolume
+
+    return volume, open, lastprice
 
 
-    currentvolume=float(data[totallength-1][5])
-    lastprice=0
-    open=0
-    volume=0
-    if currentvolume>1000 and currentvolume >2*average:
-        open=float(data[totallength-1][1])
-        lastprice=float(data[totallength-1][4])
-        volume=currentvolume
-
-
-    return volume,open,lastprice
-
-def ticker(symbol:str):
-    response=binancerequest(TICKER_URL+symbol.upper())
+def ticker(symbol: str):
+    response = binancerequest(TICKER_URL + symbol.upper())
     # print(response.status_code)
     return response.json()
+
 
 def roundoff(number: str, precision: int):
     return number[:number.index('.') + precision + 1]
 
 
-
-
 # fundingfee()
-positions=fetchpositions()
+positions = fetchpositions()
 db.get(mybinance.api_key)
 for position in positions:
-    print(position['symbol']+' '+position['positionAmt'])
+    print(position['symbol'] + ' ' + position['positionAmt'])
 # print(volumetracker())
 # print(fetchpnl())

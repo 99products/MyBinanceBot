@@ -147,6 +147,8 @@ def checkrule(oldpnl, pnl, data, positions):
     global CHANGE_PERCENT
     if 'change' in data:
         CHANGE_PERCENT = data['change']
+    if oldpnl < -100:
+        CHANGE_PERCENT = CHANGE_PERCENT/2
     if len(positions) != len(data['positions']) or checkQuantities(data['positions'], positions):
         return True
     return abs(pnl) > THRESHOLD_TO_NOTIFY and abs(oldpnl - pnl) > abs(oldpnl * (CHANGE_PERCENT / 100))
