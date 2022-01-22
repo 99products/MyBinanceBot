@@ -39,6 +39,8 @@ async def process(request: Request):
                 showpositions(update)
             elif 'fee' in text:
                 fundingfee(update)
+            elif 'margin' in text:
+                margin(update)
             else:
                 ticker(update)
         else:
@@ -81,7 +83,10 @@ def fundingfee(update):
 
 def showpositions(update):
     positions = mybinance.fetchpositions()
-    bot.sendMessage(chat_id=update.message.chat.id, text=construct_positions_text(positions), parse_mode="Markdown")
+    maintMargin,marginBalance = mybinance.acccountinfo()
+    displaytext = construct_positions_text(positions)
+    displaytext = displaytext + '\n' + 'Maintenance Margin: ' + str(maintMargin) + '\n' + 'Margin Balance: ' + str(marginBalance)
+    bot.sendMessage(chat_id=update.message.chat.id, text=displaytext, parse_mode="Markdown")
 
 
 def construct_positions_text(positions):
@@ -129,19 +134,26 @@ def pnltracker():
     data = db.get(mybinance.api_key)
     # print(data)
     positions = mybinance.fetchpositions()
+    maintMargin,marginBalance=mybinance.acccountinfo()
+
     oldpnl = 0
     if data and len(data) > 0:
         oldpnl = data['pnl']
     else:
         db.insert({'pnl': pnl, 'key': mybinance.api_key, "positions": positions})
-    if checkrule(oldpnl, pnl, data, positions):
+    if checkMargin(maintMargin,marginBalance) or checkrule(oldpnl, pnl, data, positions):
         db.insert({'pnl': pnl, 'key': mybinance.api_key, "positions": positions})
-        bot.sendMessage(chat_id=TELEGRAM_CHAT_ID, text=construct_positions_text(positions), parse_mode="Markdown",
+        displayText = construct_positions_text()
+        displayText = displayText + '\n' + 'Maintenance Margin: ' + str(maintMargin) + '\n' + 'Margin Balance: ' + str(marginBalance)
+        bot.sendMessage(chat_id=TELEGRAM_CHAT_ID, text=displayText, parse_mode="Markdown",
                         disable_notification=False)
     else:
         print(pnl)
     return pnl
 
+def checkMargin(maintMargin,marginBalance):
+    if(float(maintMargin)/float(marginBalance)>0.2):
+        return True
 
 def checkrule(oldpnl, pnl, data, positions):
     global CHANGE_PERCENT
@@ -162,6 +174,10 @@ def checkQuantities(oldpositions, positions):
                     return True
 
     return False
+
+def margin(update):
+    maintMargin,marginBalance = mybinance.acccountinfo()
+    bot.sendMessage(chat_id=update.message.chat.id, text=maintMargin + ' ' + marginBalance)
 
 
 # lazy to find the standard method

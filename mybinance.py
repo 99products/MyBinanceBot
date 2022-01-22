@@ -12,6 +12,7 @@ api_key = config['binance_api_key']
 secret_key = config['binance_secret_key']
 
 BALANCE_URL = 'https://fapi.binance.com/fapi/v2/balance?{}&signature={}'
+ACCOUNT_URL = 'https://fapi.binance.com/fapi/v2/account?{}&signature={}'
 POSITIONS_URL = 'https://fapi.binance.com//fapi/v2/positionRisk?{}&signature={}'
 KLINES_URL = 'https://fapi.binance.com/fapi/v1/continuousKlines?limit=5&pair=BTCUSDT&contractType=PERPETUAL&interval=1m'
 FUNDING_URL = 'https://fapi.binance.com//fapi/v1/income?{}&signature={}'
@@ -102,6 +103,13 @@ def volumetracker():
 
     return volume, open, lastprice
 
+def acccountinfo():
+    account = binancerequest(ACCOUNT_URL).json()
+    maintMargin = account['totalMaintMargin']
+    marginBalance= account['totalMarginBalance']
+    print(maintMargin+' '+marginBalance)
+    return maintMargin,marginBalance
+
 
 def ticker(symbol: str):
     response = binancerequest(TICKER_URL + symbol.upper())
@@ -113,10 +121,4 @@ def roundoff(number: str, precision: int):
     return number[:number.index('.') + precision + 1]
 
 
-# fundingfee()
-positions = fetchpositions()
-db.get(mybinance.api_key)
-for position in positions:
-    print(position['symbol'] + ' ' + position['positionAmt'])
-# print(volumetracker())
-# print(fetchpnl())
+acccountinfo()
