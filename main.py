@@ -143,7 +143,7 @@ def pnltracker():
         db.insert({'pnl': pnl, 'key': mybinance.api_key, "positions": positions})
     if checkMargin(maintMargin,marginBalance) or checkrule(oldpnl, pnl, data, positions):
         db.insert({'pnl': pnl, 'key': mybinance.api_key, "positions": positions})
-        displayText = construct_positions_text()
+        displayText = construct_positions_text(positions)
         displayText = displayText + '\n' + 'Maintenance Margin: ' + str(maintMargin) + '\n' + 'Margin Balance: ' + str(marginBalance)
         bot.sendMessage(chat_id=TELEGRAM_CHAT_ID, text=displayText, parse_mode="Markdown",
                         disable_notification=False)
