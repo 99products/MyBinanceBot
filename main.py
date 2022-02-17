@@ -30,7 +30,7 @@ async def process(request: Request):
     request_data = await request.json()
     update = telegram.Update.de_json(request_data, bot)
     dispatcher.process_update(update)
-    if update.message:
+    if update.message and update.message.text:
         text = update.message.text.lower()
         if update.message.chat.id == TELEGRAM_CHAT_ID:
             if 'pnl' in text:
