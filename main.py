@@ -7,14 +7,17 @@ from telegram.ext import Dispatcher, CallbackQueryHandler, CommandHandler
 from queue import Queue
 from fastapi import Request, FastAPI
 import db
+import os
 
 HELP_TEXT = 'Its my personal binance alert bot, checkout my source at https://github.com/99products/MyBinanceBot to setup your own'
 CHANGE_PERCENT = 20
 THRESHOLD_TO_NOTIFY = 5
 app = App(FastAPI())
-config = json.load(open('config.json', 'r'))
-TELEGRAM_TOKEN = config['telegram_token']
-TELEGRAM_CHAT_ID = config['my_telegram_id']
+TELEGRAM_TOKEN = os.getenv('telegram_token').strip()
+TELEGRAM_CHAT_ID = os.getenv('my_telegram_id').strip()
+
+print(TELEGRAM_TOKEN)
+
 
 bot = telegram.Bot(token=TELEGRAM_TOKEN)
 dispatcher = Dispatcher(bot=bot, use_context=True, update_queue=Queue())
@@ -32,7 +35,7 @@ async def process(request: Request):
     dispatcher.process_update(update)
     if update.message and update.message.text:
         text = update.message.text.lower()
-        if update.message.chat.id == TELEGRAM_CHAT_ID:
+        if update.message.chat.id == int(TELEGRAM_CHAT_ID):
             if 'pnl' in text:
                 showpnl(update)
             elif 'positions' in text:

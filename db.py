@@ -1,7 +1,8 @@
 from deta import Deta
 import json
+import os
 
-deta_key = json.load(open('config.json', 'r'))['deta_key']
+deta_key = os.getenv('deta_key')
 db = Deta(deta_key)
 data = db.Base('binance_alerts')
 

@@ -6,10 +6,11 @@ import hmac
 import datetime as dt
 import db
 import mybinance
+import os
 
-config = json.load(open('config.json', 'r'))
-api_key = config['binance_api_key']
-secret_key = config['binance_secret_key']
+# config = json.load(open('config.json', 'r'))
+api_key = os.getenv('binance_api_key')
+secret_key = os.getenv('binance_secret_key')
 
 BALANCE_URL = 'https://fapi.binance.com/fapi/v2/balance?{}&signature={}'
 ACCOUNT_URL = 'https://fapi.binance.com/fapi/v2/account?{}&signature={}'
