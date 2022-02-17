@@ -152,18 +152,21 @@ def pnltracker():
     return pnl
 
 def checkMargin(maintMargin,marginBalance):
-    if(float(maintMargin)/float(marginBalance)>0.2):
-        return True
+    return float(maintMargin)/float(marginBalance)>0.2
+
 
 def checkrule(oldpnl, pnl, data, positions):
+
     global CHANGE_PERCENT
+    changepercent=CHANGE_PERCENT
     if 'change' in data:
-        CHANGE_PERCENT = data['change']
+        changepercent = data['change']
     if oldpnl < -100:
-        CHANGE_PERCENT = CHANGE_PERCENT/2
+        changepercent = CHANGE_PERCENT/2
     if len(positions) != len(data['positions']) or checkQuantities(data['positions'], positions):
         return True
-    return abs(pnl) > THRESHOLD_TO_NOTIFY and abs(oldpnl - pnl) > abs(oldpnl * (CHANGE_PERCENT / 100))
+    if abs(pnl) > THRESHOLD_TO_NOTIFY and abs(oldpnl - pnl) > abs(oldpnl * (changepercent / 100)):
+        return True
 
 
 def checkQuantities(oldpositions, positions):
