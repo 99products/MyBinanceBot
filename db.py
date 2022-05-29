@@ -1,5 +1,4 @@
 from deta import Deta
-import json
 import os
 
 deta_key = os.getenv('deta_key')

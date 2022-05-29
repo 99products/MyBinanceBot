@@ -1,14 +1,10 @@
-import json
 import time
 import requests
 import hashlib
 import hmac
 import datetime as dt
-import db
-import mybinance
 import os
 
-# config = json.load(open('config.json', 'r'))
 api_key = os.getenv('binance_api_key')
 secret_key = os.getenv('binance_secret_key')
 
