@@ -4,3 +4,17 @@ My own personal bot integrated with my binance account for quick alerts and chec
 2. Alerts on profit changes 
 3. Check positions
 4. Check an asset price (e.g. just type 'BTC', it shows value of 'BTCUSDT')
+
+To use this bot,
+
+1. Setup your own telegram bot using botfather in telegram and get your token
+2. Signup with Binance API and get your api key and app secret
+3. Signup and get the project key from deta.sh, this is where we host our telegram bot
+
+Then set your environment with appropriate values for these keys,
+
+deta_key= <signup to deta.sh and get this key>
+telegram_token= <Create a telegram bot using telegram bot father and get the token>
+binance_api_key=<signup with binance and get this key>
+binance_secret_key=<Again same, signup in binance and get this>
+my_telegram_id= <This is to make sure, the bot works only for you, you can change the code to skip this>
